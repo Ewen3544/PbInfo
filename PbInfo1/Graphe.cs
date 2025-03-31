@@ -2,260 +2,249 @@
 using System.Collections.Generic;
 using System.IO;
 using SkiaSharp;
-
 namespace PbInfo
 {
-    public class Graphe
+    public class Graphe<T>
     {
-        private Dictionary<int, List<int>> listeAdjacence;
+        private Dictionary<int, List<Arc>> listeAdjacence;
         private int[,] matriceAdjacence;
         private int nbSommets;
-        public Graphe(List<Lien> liens, int nbSommets)
+        private Dictionary<int, Noeud<T>> noeuds;
+
+        public class Arc
         {
-            this.nbSommets = nbSommets;
-            listeAdjacence = new Dictionary<int, List<int>>();
-            for (int i = 1; i <= nbSommets; i++)
+            public int Destination { get; set; }
+            public double Poids { get; set; }
+            public string LigneMetro { get; set; }
+            
+            public Arc(int destination, double poids, string ligneMetro)
             {
-                listeAdjacence[i] = new List<int>();
+                Destination = destination;
+                Poids = poids;
+                LigneMetro = ligneMetro;
             }
-            foreach (var lien in liens)
+        }
+
+        public Graphe(List<Noeud<T>> noeuds)
+        {
+            this.nbSommets = noeuds.Count;
+            this.noeuds = new Dictionary<int, Noeud<T>>();
+            listeAdjacence = new Dictionary<int, List<Arc>>();
+            
+            foreach (var noeud in noeuds)
             {
-                listeAdjacence[lien.Noeud1].Add(lien.Noeud2);
-                listeAdjacence[lien.Noeud2].Add(lien.Noeud1);
+                this.noeuds[noeud.Id] = noeud;
+                listeAdjacence[noeud.Id] = new List<Arc>();
             }
+            
             matriceAdjacence = new int[nbSommets, nbSommets];
-            foreach (var lien in liens)
+        }
+
+        public void AjouterArc(int source, int destination, double poids, string ligneMetro, bool bidirectionnel = false)
+        {
+            listeAdjacence[source].Add(new Arc(destination, poids, ligneMetro));
+            matriceAdjacence[source - 1, destination - 1] = 1;
+            
+            if (bidirectionnel)
             {
-                matriceAdjacence[lien.Noeud1 - 1, lien.Noeud2 - 1] = 1;
-                matriceAdjacence[lien.Noeud2 - 1, lien.Noeud1 - 1] = 1;
+                listeAdjacence[destination].Add(new Arc(source, poids, ligneMetro));
+                matriceAdjacence[destination - 1, source - 1] = 1;
             }
         }
 
-        public void AfficherListeAdjacence()
-        {
-            Console.WriteLine("Liste d'adjacence :");
-            foreach (var sommet in listeAdjacence)
-            {
-                Console.Write(sommet.Key + " : ");
-                Console.WriteLine(string.Join(" ", sommet.Value));
-            }
-        }
-        /// <summary>
-        /// Affiche la matrice d'adjacence du graphe.
-        /// </summary>
-        public void AfficherMatriceAdjacence()
-        {
-            Console.WriteLine("Matrice d'adjacence :");
-            for (int i = 0; i < nbSommets; i++)
-            {
-                for (int j = 0; j < nbSommets; j++)
-                {
-                    Console.Write(matriceAdjacence[i, j] + " ");
-                }
-                Console.WriteLine();
-            }
-        }
+       // Dans la classe Graphe<T>
 
-        public void Largeur(int sommetDepart)
-        {
-            Console.WriteLine("Parcours en Largeur :");
-            Queue<int> fileAttente = new Queue<int>();
-            List<int> sommetsVisites = new List<int>();
-
-            fileAttente.Enqueue(sommetDepart);
-            sommetsVisites.Add(sommetDepart);
-
-            while (fileAttente.Count > 0)
-            {
-                int sommet = fileAttente.Dequeue();
-                Console.Write(sommet + " ");
-
-                foreach (var voisin in listeAdjacence[sommet])
-                {
-                    if (!sommetsVisites.Contains(voisin))
-                    {
-                        fileAttente.Enqueue(voisin);
-                        sommetsVisites.Add(voisin);
-                    }
-                }
-            }
-
-            Console.WriteLine("\nNombre de sommets visités : " + sommetsVisites.Count);
-            if (sommetsVisites.Count == nbSommets)
-                Console.WriteLine("Le graphe est connexe");
-            else
-                Console.WriteLine("Le graphe n'est pas connexe");
-        }
-
-        public void Profondeur(int sommetDepart)
-        {
-            Console.WriteLine("\nParcours en Profondeur :");
-            List<int> sommetsVisites = new List<int>();
-            ExplorerProfondeur(sommetDepart, sommetsVisites);
-            Console.WriteLine();
-        }
-
-        private void ExplorerProfondeur(int sommet, List<int> sommetsVisites)
-        {
-            Console.Write(sommet + " ");
-            sommetsVisites.Add(sommet);
-
-            foreach (var voisin in listeAdjacence[sommet])
-            {
-                if (!sommetsVisites.Contains(voisin))
-                {
-                    ExplorerProfondeur(voisin, sommetsVisites);
-                }
-            }
-        }
-
-        public bool ContientUnCycle()
-        {
-            List<int> visites = new List<int>();
-            return VerifierCycle(1, -1, visites);
-        }
-        /// <summary>
-        /// Vérifie si le graphe contient un cycle.
-        /// </summary>
-        /// <returns>True si un cycle est détecté, False sinon.</returns>
-        private bool VerifierCycle(int sommet, int parent, List<int> visites)
-        {
-            visites.Add(sommet);
-            foreach (var voisin in listeAdjacence[sommet])
-            {
-                if (!visites.Contains(voisin))
-                {
-                    if (VerifierCycle(voisin, sommet, visites))
-                        return true;
-                }
-                else if (voisin != parent)
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
-        public void AnalyserGraphe()
-        {
-            int tailleGraphe = 0;
-            foreach (var listeVoisins in listeAdjacence.Values)
-            {
-                tailleGraphe += listeVoisins.Count;
-            }
-            tailleGraphe /= 2;
-
-            Console.WriteLine("Analyse du Graphe :");
-            Console.WriteLine($"Ordre du graphe (nombre de sommets) : {nbSommets}");
-            Console.WriteLine($"Taille du graphe (nombre d’arêtes) : {tailleGraphe}");
-            Console.WriteLine("Type du graphe :");
-            Console.WriteLine("Graphes non orienté ");
-            Console.WriteLine("Graphe simple (pas d’arêtes multiples) ");
-        }
-        /// <summary>
-        /// Il faut installer SkiaSharp
-        /// </summary>
-        /// <param name="cheminImage"></param>
-        public void VisualiserGraphe(string cheminImage)
-        {
-            int largeur = 3000;
-            int hauteur = 3000;
-            int rayonSommet = 70;
-            int marge = 50;
-            using (var bitmap = new SKBitmap(largeur, hauteur))
-            using (var canvas = new SKCanvas(bitmap))
-            {
-                canvas.Clear(SKColors.White);
-                Dictionary<int, SKPoint> positionsSommets = new Dictionary<int, SKPoint>();
-                double angleStep = 2 * Math.PI / nbSommets;
-                int centreX = largeur / 2;
-                int centreY = hauteur / 2;
-                int rayonGraph = Math.Min(largeur, hauteur) / 3;
-
-                for (int i = 1; i <= nbSommets; i++)
-                {
-                    double angle = i * angleStep;
-                    float x = centreX + (float)(rayonGraph * Math.Cos(angle));
-                    float y = centreY + (float)(rayonGraph * Math.Sin(angle));
-                    positionsSommets[i] = new SKPoint(x, y);
-                }
-                using (var paintArrete = new SKPaint { Color = SKColors.Black, StrokeWidth = 2, IsAntialias = true })
-                {
-                    foreach (var sommet in listeAdjacence)
-                    {
-                        foreach (var voisin in sommet.Value)
-                        {
-                            SKPoint p1 = positionsSommets[sommet.Key];
-                            SKPoint p2 = positionsSommets[voisin];
-                            canvas.DrawLine(p1, p2, paintArrete);
-                        }
-                    }
-                }
-                using (var paintSommet = new SKPaint { Color = SKColors.Blue, IsAntialias = true })
-                using (var paintTexte = new SKPaint { Color = SKColors.White, TextSize = 35, TextAlign = SKTextAlign.Center, IsAntialias = true })
-                {
-                    foreach (var sommet in positionsSommets)
-                    {
-                        SKPoint position = sommet.Value;
-                        canvas.DrawCircle(position, rayonSommet, paintSommet);
-                        canvas.DrawText(sommet.Key.ToString(), position.X, position.Y + 5, paintTexte);
-                    }
-                }
-                using (var image = SKImage.FromBitmap(bitmap))
-                using (var data = image.Encode(SKEncodedImageFormat.Png, 100))
-                {
-                    File.WriteAllBytes(cheminImage, data.ToArray());
-                }
-            }
-
-            Console.WriteLine($"Graphe visualisé et enregistré sous : {cheminImage}");
-        }
-        public Dictionary<int, List<int>> GetListeAdjacence()
-        {
-            return listeAdjacence;
-        }
-
-        public int[,] GetMatriceAdjacence()
-        {
-            return matriceAdjacence;
-        }
-
-        public bool EstConnexe()
-        {
-            List<int> sommetsVisites = new List<int>();
-            ExplorerProfondeur(1, sommetsVisites);
-            return sommetsVisites.Count == nbSommets;
-        }
-
-        public List<int> GetParcoursLargeur(int sommetDepart)
-        {
-            Queue<int> file = new Queue<int>();
-            List<int> parcours = new List<int>();
-
-            file.Enqueue(sommetDepart);
-            parcours.Add(sommetDepart);
-
-            while (file.Count > 0)
-            {
-                int sommet = file.Dequeue();
-                foreach (var voisin in listeAdjacence[sommet])
-                {
-                    if (!parcours.Contains(voisin))
-                    {
-                        file.Enqueue(voisin);
-                        parcours.Add(voisin);
-                    }
-                }
-            }
-            return parcours;
-        }
-
-        public List<int> GetParcoursProfondeur(int sommetDepart)
-        {
-            List<int> parcours = new List<int>();
-            ExplorerProfondeur(sommetDepart, parcours);
-            return parcours;
-        }
-
+public (List<int> chemin, double distance) Dijkstra(int depart, int arrivee)
+{
+    var distances = new Dictionary<int, double>();
+    var precedents = new Dictionary<int, int>();
+    var noeudsNonVisites = new HashSet<int>();
+    
+    foreach (var noeud in noeuds.Keys)
+    {
+        distances[noeud] = double.MaxValue;
+        precedents[noeud] = -1;
+        noeudsNonVisites.Add(noeud);
     }
+    
+    distances[depart] = 0;
+    
+    while (noeudsNonVisites.Count > 0)
+    {
+        int courant = -1;
+        double distanceMin = double.MaxValue;
+        
+        foreach (var noeud in noeudsNonVisites)
+        {
+            if (distances[noeud] < distanceMin)
+            {
+                distanceMin = distances[noeud];
+                courant = noeud;
+            }
+        }
+        
+        if (courant == -1 || courant == arrivee)
+            break;
+            
+        noeudsNonVisites.Remove(courant);
+        
+        foreach (var arc in listeAdjacence[courant])
+        {
+            double distanceAlternative = distances[courant] + arc.Poids;
+            if (distanceAlternative < distances[arc.Destination])
+            {
+                distances[arc.Destination] = distanceAlternative;
+                precedents[arc.Destination] = courant;
+            }
+        }
+    }
+    
+    var chemin = new List<int>();
+    int noeudCourant = arrivee;
+    
+    while (noeudCourant != -1 && noeudCourant != depart)
+    {
+        chemin.Insert(0, noeudCourant);
+        noeudCourant = precedents.ContainsKey(noeudCourant) ? precedents[noeudCourant] : -1;
+        
+        if (noeudCourant == -1)
+            return (new List<int>(), double.MaxValue);
+    }
+    
+    chemin.Insert(0, depart);
+    return (chemin, distances[arrivee]);
 }
 
+public (List<int> chemin, double distance) BellmanFord(int depart, int arrivee)
+{
+    var distances = new Dictionary<int, double>();
+    var precedents = new Dictionary<int, int>();
+    
+    foreach (var noeud in noeuds.Keys)
+    {
+        distances[noeud] = double.MaxValue;
+        precedents[noeud] = -1;
+    }
+    
+    distances[depart] = 0;
+    
+    for (int i = 1; i < noeuds.Count; i++)
+    {
+        foreach (var u in noeuds.Keys)
+        {
+            foreach (var arc in listeAdjacence[u])
+            {
+                int v = arc.Destination;
+                double poids = arc.Poids;
+                
+                if (distances[u] != double.MaxValue && distances[u] + poids < distances[v])
+                {
+                    distances[v] = distances[u] + poids;
+                    precedents[v] = u;
+                }
+            }
+        }
+    }
+    
+    foreach (var u in noeuds.Keys)
+    {
+        foreach (var arc in listeAdjacence[u])
+        {
+            int v = arc.Destination;
+            double poids = arc.Poids;
+            
+            if (distances[u] != double.MaxValue && distances[u] + poids < distances[v])
+            {
+                throw new InvalidOperationException("Le graphe contient un cycle de poids négatif");
+            }
+        }
+    }
+    
+    var chemin = new List<int>();
+    int noeudCourant = arrivee;
+    
+    while (noeudCourant != -1 && noeudCourant != depart)
+    {
+        chemin.Insert(0, noeudCourant);
+        noeudCourant = precedents.ContainsKey(noeudCourant) ? precedents[noeudCourant] : -1;
+        
+        if (noeudCourant == -1)
+            return (new List<int>(), double.MaxValue);
+    }
+    
+    chemin.Insert(0, depart);
+    return (chemin, distances[arrivee]);
+}
+
+public (List<int> chemin, double distance) FloydWarshall(int depart, int arrivee)
+{
+    int n = noeuds.Count;
+    double[,] dist = new double[n, n];
+    int[,] next = new int[n, n];
+    
+    for (int i = 0; i < n; i++)
+    {
+        for (int j = 0; j < n; j++)
+        {
+            dist[i, j] = double.MaxValue;
+            next[i, j] = -1;
+        }
+        dist[i, i] = 0;
+    }
+    
+    foreach (var u in noeuds.Keys)
+    {
+        foreach (var arc in listeAdjacence[u])
+        {
+            int v = arc.Destination;
+            dist[u-1, v-1] = arc.Poids;
+            next[u-1, v-1] = v-1;
+        }
+    }
+    
+    for (int k = 0; k < n; k++)
+    {
+        for (int i = 0; i < n; i++)
+        {
+            for (int j = 0; j < n; j++)
+            {
+                if (dist[i, k] != double.MaxValue && 
+                    dist[k, j] != double.MaxValue && 
+                    dist[i, j] > dist[i, k] + dist[k, j])
+                {
+                    dist[i, j] = dist[i, k] + dist[k, j];
+                    next[i, j] = next[i, k];
+                }
+            }
+        }
+    }
+    
+    for (int i = 0; i < n; i++)
+    {
+        if (dist[i, i] < 0)
+        {
+            throw new InvalidOperationException("Le graphe contient un cycle de poids négatif");
+        }
+    }
+    
+    if (next[depart-1, arrivee-1] == -1)
+    {
+        return (new List<int>(), double.MaxValue);
+    }
+    
+    var chemin = new List<int>();
+    chemin.Add(depart);
+    
+    int u = depart-1;
+    int v = arrivee-1;
+    
+    while (u != v)
+    {
+        u = next[u, v];
+        chemin.Add(u+1);
+    }
+    
+    return (chemin, dist[depart-1, arrivee-1]);
+}
+    }
+}
