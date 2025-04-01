@@ -1,93 +1,39 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 
-namespace PbInfo
+namespace PbInfo1
 {
     public class Program
     {
         static void Main(string[] args)
         {
-            // Charger les données du métro
-            string cheminFichier = @"C:\chemin\vers\MetroParis.xlsx";
-            var graphe = MetroParisLoader.ChargerDonnees(cheminFichier);
-
-            // Exemple : Trouver le chemin le plus court entre Porte Maillot (1) et Nation (141)
-            int depart = 1;   // Porte Maillot
-            int arrivee = 141; // Nation
-
-            Console.WriteLine("Calcul du chemin le plus court...");
-            Console.WriteLine($"De: {graphe.GetNoeud(depart)}");
-            Console.WriteLine($"À: {graphe.GetNoeud(arrivee)}");
-            Console.WriteLine();
-
-            // Dijkstra
-            var (cheminDijkstra, tempsDijkstra) = graphe.Dijkstra(depart, arrivee);
-            AfficherChemin(cheminDijkstra, graphe, tempsDijkstra, "Dijkstra");
-
-            // Bellman-Ford
-            var (cheminBellman, tempsBellman) = graphe.BellmanFord(depart, arrivee);
-            AfficherChemin(cheminBellman, graphe, tempsBellman, "Bellman-Ford");
-
-            // Floyd-Warshall
-            var (cheminFloyd, tempsFloyd) = graphe.FloydWarshall(depart, arrivee);
-            AfficherChemin(cheminFloyd, graphe, tempsFloyd, "Floyd-Warshall");
-
-            // Visualiser le graphe
-            graphe.VisualiserGraphe("metro_paris.png");
-        }
-
-        static void AfficherChemin(List<int> chemin, Graphe<string> graphe, double temps, string algorithme)
-        {
-            Console.WriteLine($"=== Résultat avec {algorithme} ===");
-            
-            if (chemin.Count == 0)
+            string cheminFichier = @"C:\Users\ewenr\Downloads\karate.txt";
+            string[] lignes = File.ReadAllLines(cheminFichier);
+            string[] premiereLigne = lignes[0].Split(' ');
+            int nbSommets = int.Parse(premiereLigne[0]);
+            List<Lien> liens = new List<Lien>();
+            for (int i = 1; i < lignes.Length; i++)
             {
-                Console.WriteLine("Aucun chemin trouvé");
-                return;
-            }
-            
-            Console.WriteLine($"Temps total: {temps} minutes");
-            Console.WriteLine("Itinéraire:");
-            
-            string ligneActuelle = null;
-            
-            for (int i = 0; i < chemin.Count; i++)
-            {
-                var station = graphe.GetNoeud(chemin[i]);
-                
-                if (i == 0)
+                string[] elementsLigne = lignes[i].Split(' ');
+                if (elementsLigne.Length == 2)
                 {
-                    ligneActuelle = station.Ligne;
-                    Console.WriteLine($"Prendre la ligne {ligneActuelle} à {station.Nom}");
-                }
-                else
-                {
-                    var stationPrecedente = graphe.GetNoeud(chemin[i-1]);
-                    var arcs = graphe.GetListeAdjacence()[chemin[i-1]];
-                    var arc = arcs.FirstOrDefault(a => a.Destination == chemin[i]);
-                    
-                    if (arc.Ligne != ligneActuelle && !arc.EstCorrespondance)
-                    {
-                        Console.WriteLine($"Changer à {stationPrecedente.Nom} pour la ligne {arc.Ligne}");
-                        ligneActuelle = arc.Ligne;
-                    }
-                    
-                    if (arc.EstCorrespondance)
-                    {
-                        Console.WriteLine($"Correspondance à {stationPrecedente.Nom} (temps: {arc.Poids} minutes)");
-                    }
-                    
-                    Console.WriteLine($"- {station.Nom} (Ligne {station.Ligne})");
+                    int sommet1 = int.Parse(elementsLigne[0]);
+                    int sommet2 = int.Parse(elementsLigne[1]);
+                    liens.Add(new Lien(sommet1, sommet2));
                 }
             }
-            
-            Console.WriteLine();
+            Graphe graphe = new Graphe(liens, nbSommets);
+            graphe.AfficherListeAdjacence();
+            graphe.AfficherMatriceAdjacence();
+            graphe.Largeur(1);
+            graphe.Profondeur(1);
+            if (graphe.ContientUnCycle())
+                Console.WriteLine("Le graphe contient un cycle");
+            else
+                Console.WriteLine("Le graphe ne contient pas de cycle");
+            graphe.AnalyserGraphe();
+            graphe.VisualiserGraphe("graphe.png");
         }
     }
 }
