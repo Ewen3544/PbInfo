@@ -1,37 +1,37 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-
-
-namespace PbInfo
+namespace PbInfo1
 {
-    public class Noeud<T>
+    /// <summary>
+    /// Représente un nœud dans un graphe.
+    /// </summary>
+    public class Noeud
     {
+        /// <summary>
+        /// Identifiant unique du nœud.
+        /// </summary>
         public int Id { get; set; }
-        public T Data { get; set; }
-        public string Nom { get; set; }
-        public double Latitude { get; set; }
-        public double Longitude { get; set; }
-        public string Ligne { get; set; }
-        public string Commune { get; set; }
 
-        public Noeud(int id, T data, string nom, double latitude, double longitude, string ligne, string commune)
+        /// <summary>
+        /// Constructeur de la classe Noeud.
+        /// </summary>
+        /// <param name="id">Identifiant du nœud.</param>
+        public Noeud(int id)
         {
             Id = id;
-            Data = data;
-            Nom = nom;
-            Latitude = latitude;
-            Longitude = longitude;
-            Ligne = ligne;
-            Commune = commune;
         }
-
+        /// <summary>
+        /// Retourne une représentation du nœud.
+        /// </summary>
+        /// <returns>Chaîne représentant le nœud.</returns>
         public override string ToString()
         {
-            return $"{Nom} (Ligne {Ligne})";
+            return $"Noeud: {Id}";
         }
     }
 }
+
