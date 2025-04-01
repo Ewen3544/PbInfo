@@ -4,21 +4,41 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PbInfo
+namespace PbInfo1
 {
-    public class Arc
+    /// <summary>
+    /// Représente un lien entre deux nœuds dans un graphe.
+    /// </summary>
+    public class Lien
     {
-        public int Destination { get; set; }
-        public double Poids { get; set; }
-        public string Ligne { get; set; }
-        public bool EstCorrespondance { get; set; }
+        /// <summary>
+        /// Identifiant du premier nœud du lien.
+        /// </summary>
+        public int Noeud1 { get; set; }
 
-        public Arc(int destination, double poids, string ligne, bool estCorrespondance = false)
+        /// <summary>
+        /// Identifiant du second nœud du lien.
+        /// </summary>
+        public int Noeud2 { get; set; }
+
+        /// <summary>
+        /// Constructeur de la classe Lien.
+        /// </summary>
+        /// <param name="noeud1">Premier nœud.</param>
+        /// <param name="noeud2">Second nœud.</param>
+        public Lien(int noeud1, int noeud2)
         {
-            Destination = destination;
-            Poids = poids;
-            Ligne = ligne;
-            EstCorrespondance = estCorrespondance;
+            Noeud1 = noeud1;
+            Noeud2 = noeud2;
+        }
+
+        /// <summary>
+        /// Retourne une représentation du lien.
+        /// </summary>
+        /// <returns>Chaîne représentant le lien.</returns>
+        public override string ToString()
+        {
+            return $"{Noeud1} - {Noeud2}";
         }
     }
 }
