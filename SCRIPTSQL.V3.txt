@@ -1,0 +1,100 @@
+CREATE TABLE Utilisateur (
+    id_Utilisateur INT PRIMARY KEY AUTO_INCREMENT,
+    Nom VARCHAR(50) NOT NULL,
+    Prenom VARCHAR(50) NOT NULL,
+    Telephone VARCHAR(15) NOT NULL,
+    Rue VARCHAR(50) NOT NULL,
+    Numero_Adresse INT NOT NULL,
+    Code_Postal VARCHAR(10) NOT NULL,
+    Ville VARCHAR(50) NOT NULL,
+    Email VARCHAR(100) UNIQUE NOT NULL,
+    Metro_Proche VARCHAR(50),
+    MotDePasse VARCHAR(100) NOT NULL,
+    Role VARCHAR(20) NOT NULL
+);
+
+CREATE TABLE Client (
+    id_Client INT PRIMARY KEY AUTO_INCREMENT,
+    Regime VARCHAR(50),
+    id_Utilisateur INT NOT NULL,
+    FOREIGN KEY (id_Utilisateur) REFERENCES Utilisateur(id_Utilisateur)
+);
+
+CREATE TABLE Cuisinier (
+    id_Cuisinier INT PRIMARY KEY AUTO_INCREMENT,
+    Specialite VARCHAR(50) NOT NULL,
+    id_Utilisateur INT NOT NULL,
+    FOREIGN KEY (id_Utilisateur) REFERENCES Utilisateur(id_Utilisateur)
+);
+
+CREATE TABLE Plat (
+    id_Plat INT PRIMARY KEY AUTO_INCREMENT,
+    Nom VARCHAR(50) NOT NULL,
+    TypePlat VARCHAR(20) NOT NULL,
+    NbPersonnes INT NOT NULL,
+    DateFabrication DATE NOT NULL,
+    DatePeremption DATE NOT NULL,
+    PrixParPersonne DECIMAL(15,2) NOT NULL,
+    Nationalite VARCHAR(50) NOT NULL,
+    RegimeAlimentaire VARCHAR(50) NOT NULL,
+    Ingredients TEXT NOT NULL,
+    id_Cuisinier INT NOT NULL,
+    FOREIGN KEY (id_Cuisinier) REFERENCES Cuisinier(id_Cuisinier)
+);
+
+CREATE TABLE Commande (
+    id_Commande INT PRIMARY KEY AUTO_INCREMENT,
+    Date_Commande DATETIME NOT NULL,
+    Prix_Commande DECIMAL(15,2) NOT NULL,
+    Statut VARCHAR(20) NOT NULL,
+    id_Client INT NOT NULL,
+    FOREIGN KEY (id_Client) REFERENCES Client(id_Client)
+);
+
+CREATE TABLE Livraison (
+    id_Livraison INT PRIMARY KEY AUTO_INCREMENT,
+    Statut VARCHAR(20) NOT NULL,
+    Date_Livraison DATETIME,
+    Adresse_Livraison VARCHAR(100) NOT NULL,
+    id_Commande INT NOT NULL,
+    FOREIGN KEY (id_Commande) REFERENCES Commande(id_Commande)
+);
+
+CREATE TABLE Contient (
+    id_Commande INT,
+    id_Plat INT,
+    Quantite INT NOT NULL,
+    PRIMARY KEY (id_Commande, id_Plat),
+    FOREIGN KEY (id_Commande) REFERENCES Commande(id_Commande),
+    FOREIGN KEY (id_Plat) REFERENCES Plat(id_Plat)
+);
+
+CREATE TABLE Avis_Client (
+    id_Avis INT PRIMARY KEY AUTO_INCREMENT,
+    Note DECIMAL(3,1) NOT NULL,
+    Commentaire TEXT,
+    Date_Avis DATETIME NOT NULL,
+    id_Client INT NOT NULL,
+    id_Plat INT NOT NULL,
+    FOREIGN KEY (id_Client) REFERENCES Client(id_Client),
+    FOREIGN KEY (id_Plat) REFERENCES Plat(id_Plat)
+);
+
+CREATE TABLE Favoris (
+    id_Client INT NOT NULL,
+    id_Plat INT NOT NULL,
+    Date_Ajout DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id_Client, id_Plat),
+    FOREIGN KEY (id_Client) REFERENCES Client(id_Client) ON DELETE CASCADE,
+    FOREIGN KEY (id_Plat) REFERENCES Plat(id_Plat) ON DELETE CASCADE
+);
+
+CREATE TABLE MenuDuJour (
+    id_Menu INT PRIMARY KEY AUTO_INCREMENT,
+    DateMenu DATE NOT NULL UNIQUE,
+    id_PlatPrincipal INT NOT NULL,
+    id_Dessert INT,
+    Description TEXT,
+    FOREIGN KEY (id_PlatPrincipal) REFERENCES Plat(id_Plat),
+    FOREIGN KEY (id_Dessert) REFERENCES Plat(id_Plat)
+);
